@@ -1,6 +1,10 @@
 # %%
 import os
 import supervision as sv
+import torch
+import numpy as np
+from more_itertools import chunked
+from transformers import AutoProcessor, SiglipVisionModel
 from tqdm import tqdm
 from pathlib import Path
 from inference import get_model
@@ -17,9 +21,59 @@ PLAYER_DETECTION_MODEL = get_model(PLAYER_DETECTION_MODEL_ID, api_key=ROBOFLOW_A
 
 
 # %%
+# Load Models from Hugging Face
+MODEL_ID = "google/siglip-base-patch16-224"
+
+DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+EMBEDDING_MODEL = SiglipVisionModel.from_pretrained(MODEL_ID).to(DEVICE)
+EMBEDDING_PROCESSOR = AutoProcessor.from_pretrained(MODEL_ID)
+
+
+# %%
+# Define paths
 PROJECT_PATH = Path("/home/whilebell/Code/football-tracker-analysis/")
 SOURCE_VIDEO_PATH = PROJECT_PATH / "data/testing_video/08fd33_4.mp4"
 OUTPUT_VIDEO_PATH = PROJECT_PATH / "data/output_videos/08fd33_4.mp4"
+
+# %%
+STRIDE = 30
+PLAYER_ID = 2
+
+
+def extract_crop(source_video_path: str):
+    # Extracts crops of players from the video source using the player detection model.
+    frame_generator = sv.get_video_frames_generator(source_video_path, stride=STRIDE)
+
+    crops = []
+    for frame in tqdm(frame_generator, desc="Collecting crops"):
+        result = PLAYER_DETECTION_MODEL.infer(frame, confidence=0.3)[0]
+        detections = sv.Detections.from_inference(result)
+        detections = detections.with_nms(threshold=0.5, class_agnostic=True)
+        detections = detections[detections.class_id == PLAYER_ID]
+        crops = [sv.crop_image(frame, xyxy) for xyxy in detections.xyxy]
+    return crops
+
+
+# %%
+# Extract crops from the video source
+crops = extract_crop(SOURCE_VIDEO_PATH)
+len(crops)
+
+BATCH_SIZE = 32
+
+crops = [sv.cv2_to_pillow(crop) for crop in crops]
+batches = chunked(crops, BATCH_SIZE)
+data = []
+
+with torch.no_grad():
+    for batch in tqdm(batches, desc="Extracting embeddings"):
+        inputs = EMBEDDING_PROCESSOR(images=batch, return_tensors="pt").to(DEVICE)
+        outputs = EMBEDDING_MODEL(**inputs)
+        embeddings = torch.mean(outputs.last_hidden_state, dim=1).cpu().numpy()
+        data.append(embeddings)
+
+data = np.concatenate(data)
+print(data.shape)
 
 
 # %%
