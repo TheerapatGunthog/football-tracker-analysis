@@ -80,16 +80,16 @@ print(data.shape)
 # frame generator for the video source
 BALL_ID = 0
 ellipse_annotator = sv.EllipseAnnotator(
-    color=sv.ColorPalette.from_hex(["#00BFFF", "#FF1493", "#FFD700"]),
+    color=sv.ColorPalette.from_hex(["#fabd2f", "#83a598", "#fb4934"]),  # Gruvbox Yellow, Blue, Red
     thickness=2,
 )
 label_annotator = sv.LabelAnnotator(
-    color=sv.ColorPalette.from_hex(["#00BFFF", "#FF1493", "#FFD700"]),
-    text_color=sv.Color.from_hex("#000000"),
+    color=sv.ColorPalette.from_hex(["#fabd2f", "#83a598", "#fb4934"]),  # Gruvbox Yellow, Blue, Red
+    text_color=sv.Color.from_hex("#ebdbb2"),  # Gruvbox Foreground
     text_position=sv.Position.BOTTOM_CENTER,
 )
 triangle_annotator = sv.TriangleAnnotator(
-    color=sv.Color.from_hex("#FFD700"), base=20, height=20
+    color=sv.Color.from_hex("#fabd2f"), base=20, height=20  # Gruvbox Yellow
 )
 
 tracker = sv.ByteTrack()
