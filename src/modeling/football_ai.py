@@ -1,4 +1,3 @@
-# %%
 import os
 import supervision as sv
 import torch
@@ -18,13 +17,11 @@ from typing import Optional, Dict, Any
 load_dotenv()
 
 
-# %%
 # Load Player Detection Model from Roboflow
 ROBOFLOW_API_KEY = os.getenv("ROBOFLOW_API_KEY")
 PLAYER_DETECTION_MODEL_ID = "football-players-detection-3zvbc/12"
 PLAYER_DETECTION_MODEL = get_model(PLAYER_DETECTION_MODEL_ID, api_key=ROBOFLOW_API_KEY)
 
-# %%
 # Load Pich Detection Model from Roboflow
 FIELD_DETECTION_MODEL_ID = "football-field-detection-f07vi/15"
 FIELD_DETECTION_MODEL = get_model(
@@ -32,7 +29,6 @@ FIELD_DETECTION_MODEL = get_model(
 )
 
 
-# %%
 # Load Models from Hugging Face
 MODEL_ID = "google/siglip-base-patch16-224"
 
@@ -41,23 +37,19 @@ EMBEDDINGS_MODEL = SiglipVisionModel.from_pretrained(MODEL_ID).to(DEVICE)
 EMBEDDINGS_PROCESSOR = AutoProcessor.from_pretrained(MODEL_ID)
 
 
-# %%
 # Define paths
-PROJECT_PATH = Path(
-    "/home/whilebell/Code/football-tracker-analysis/"
-)  # Adjusted for local execution
-SOURCE_VIDEO_PATH = PROJECT_PATH / "data/testing_videos/121364_0.mp4"
-OUTPUT_VIDEO_PATH = PROJECT_PATH / "data/output_videos/121364_0_MULTI_VIEW_STATS_50.mp4"
+PROJECT_PATH = Path("/home/whilebell/Code/football-tracker-analysis/")
+SOURCE_VIDEO_PATH = PROJECT_PATH / "data/testing_videos/0bfacc_0.mp4"
+OUTPUT_VIDEO_PATH = PROJECT_PATH / "data/output_videos/0bfacc_0_MULTI_VIEW_STATS.mp4"
 
 # Create output directory if it doesn't exist
 OUTPUT_VIDEO_PATH.parent.mkdir(parents=True, exist_ok=True)
 
 
-# %%
-# --- NEW --- Faster Testing Flag
-TEST_MODE = False  # Set to True to process only the first 10 seconds of the video
+# TEST_MODE will process only 10 seconds of the video
+TEST_MODE = False
 
-STRIDE = 1  # Process every frame for smooth video
+STRIDE = 1
 PLAYER_ID = 2
 
 
@@ -79,7 +71,6 @@ def extract_crop(source_video_path: str):
     return crops
 
 
-# %%
 def resolve_goalkeepers_team_id(
     players_detections: sv.Detections, goalkeeper_detections: sv.Detections
 ):
@@ -110,7 +101,6 @@ def resolve_goalkeepers_team_id(
     return np.array(goalkeepers_team_id, dtype=int)
 
 
-# %%
 def draw_pitch_voronoi_diagram_2(
     config: SoccerPitchConfiguration,
     team_1_xy: np.ndarray,
@@ -366,9 +356,7 @@ class TeamStatsTracker:
                 dist_moved = np.linalg.norm(
                     current_pos - self.player_last_positions[tracker_id]
                 )
-                if (
-                    0.1 < dist_moved < 5.0
-                ):  # This threshold is fine for distance accumulation
+                if 0.1 < dist_moved < 3.0:
                     self.team_distances[team_id] += dist_moved
 
                     # We keep this part to ensure the speed_count variable still exists,
@@ -379,7 +367,6 @@ class TeamStatsTracker:
 
             self.player_last_positions[tracker_id] = current_pos
 
-    # (The _update_possession method remains the same as the one I provided in the previous step)
     def _update_possession(
         self,
         detections: sv.Detections,
