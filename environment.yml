@@ -1,0 +1,17 @@
+name: football-minimal
+channels:
+  - pytorch
+  - nvidia
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.12
+  - pip
+  - pytorch-cuda=12.4
+  - pip:
+      - supervision
+      - numpy
+      - opencv-python
+      - transformers
+      - tqdm
+      - python-dotenv
